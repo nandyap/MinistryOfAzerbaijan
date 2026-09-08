@@ -1,0 +1,54 @@
+# Set this to the App Gateway's public IP or FQDN (not the internal Container App FQDN anymore)
+$gwHost = "<app-gateway-public-ip-or-fqdn>"
+$apiKey = "<orchestrator-api-key>"
+
+# 1. Health check (no auth)
+curl -k "https://$gwHost/health"
+
+# 2. Ask a question (new conversation)
+curl -k -X POST "https://$gwHost/chat" `
+  -H "Content-Type: application/json" `
+  -H "X-API-KEY: $apiKey" `
+  -H "X-User-Id: test-teacher-001" `
+  -d '{"ask":"What is the capital of Sweden?"}'
+
+# Save conversation_id and question_id from the response, then:
+$convId = "<conversation_id from response>"
+$qId = "<question_id from response>"
+
+# 3. Ask a follow-up question (same conversation)
+curl -k -X POST "https://$gwHost/chat" `
+  -H "Content-Type: application/json" `
+  -H "X-API-KEY: $apiKey" `
+  -H "X-User-Id: test-teacher-001" `
+  -d "{`"ask`":`"Tell me about its history`",`"conversation_id`":`"$convId`"}"
+
+# 4. Submit feedback (thumbs up)
+curl -k -X POST "https://$gwHost/orchestrator" `
+  -H "Content-Type: application/json" `
+  -H "X-API-KEY: $apiKey" `
+  -d "{`"type`":`"feedback`",`"conversation_id`":`"$convId`",`"question_id`":`"$qId`",`"is_positive`":true,`"stars_rating`":5,`"feedback_text`":`"Accurate`"}"
+
+# 5. List conversations for this user
+curl -k "https://$gwHost/conversations" `
+  -H "X-API-KEY: $apiKey" `
+  -H "X-User-Id: test-teacher-001"
+
+# 6. Get full conversation detail (verify answer + feedback persisted)
+curl -k "https://$gwHost/conversations/$convId" `
+  -H "X-API-KEY: $apiKey" `
+  -H "X-User-Id: test-teacher-001"
+
+# 7. Get aggregate feedback
+curl -k "https://$gwHost/feedback" `
+  -H "X-API-KEY: $apiKey" `
+  -H "X-User-Id: test-teacher-001"
+
+# 8. Cross-user isolation check (should NOT see test-teacher-001's data)
+curl -k "https://$gwHost/conversations" `
+  -H "X-API-KEY: $apiKey" `
+  -H "X-User-Id: test-teacher-002"
+
+# 9. Auth rejection check (should fail with 401)
+curl -k "https://$gwHost/conversations" `
+  -H "X-User-Id: test-teacher-001"
