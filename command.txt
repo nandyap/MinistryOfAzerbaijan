@@ -1,3 +1,14 @@
+API Keys-
+
+Orchestrator - ORCHESTRATOR_APP_APIKEY ---> NDE4NGU3YTMtZGExZi00NWViLTkwNjEt
+Ingestion    - INGESTION_APP_APIKEY    ---> 943040f97c8b48c382c2976fd2167c6f
+
+
+FQDN 
+Orchestrator - "ca-epj2ijiie4drm-orchestrator.purplebay-4a93a1b6.swedencentral.azurecontainerapps.io"
+Ingestion    - "ca-epj2ijiie4drm-dataingest.purplebay-4a93a1b6.swedencentral.azurecontainerapps.io"
+
+
 # Set this to the App Gateway's public IP or FQDN (not the internal Container App FQDN anymore)
 $gwHost = "<app-gateway-public-ip-or-fqdn>"
 $apiKey = "<orchestrator-api-key>"
