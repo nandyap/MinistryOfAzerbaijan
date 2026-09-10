@@ -8,6 +8,15 @@ FQDN
 Orchestrator - "ca-epj2ijiie4drm-orchestrator.purplebay-4a93a1b6.swedencentral.azurecontainerapps.io"
 Ingestion    - "ca-epj2ijiie4drm-dataingest.purplebay-4a93a1b6.swedencentral.azurecontainerapps.io"
 
+$cert = New-SelfSignedCertificate -DnsName "appgw-orchestrator.local" -CertStoreLocation "cert:\CurrentUser\My" -KeyExportPolicy Exportable -KeySpec Signature -KeyLength 2048 -NotAfter (Get-Date).AddYears(2)
+
+$certPassword = "ChangeThisP@ssw0rd!"
+$certPath = "C:\temp\appgw-cert.pfx"
+
+New-Item -ItemType Directory -Path "C:\temp" -Force | Out-Null
+
+Export-PfxCertificate -Cert $cert -FilePath $certPath -Password (ConvertTo-SecureString -String $certPassword -Force -AsPlainText)
+
 
 # Set this to the App Gateway's public IP or FQDN (not the internal Container App FQDN anymore)
 $gwHost = "<app-gateway-public-ip-or-fqdn>"
@@ -63,3 +72,19 @@ curl -k "https://$gwHost/conversations" `
 # 9. Auth rejection check (should fail with 401)
 curl -k "https://$gwHost/conversations" `
   -H "X-User-Id: test-teacher-001"
+
+#10. Upload a file 
+
+$ingestFqdn = "<ingestion-container-app-fqdn>"   # get via az containerapp show
+
+$filePath = "C:\path\to\test.pdf"
+
+$form = @{
+    file = Get-Item -Path $filePath
+}
+
+Invoke-RestMethod -Uri "https://$ingestFqdn/documents/upload" `
+  -Method Post `
+  -Headers @{ "X-API-KEY" = $ingestApiKey } `
+  -Form $form `
+  -SkipCertificateCheck
